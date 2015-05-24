@@ -12,6 +12,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../core-animated-pages/core-animated-pages.html">
 <link rel="import" href="../firebase-element/firebase-element.html">
+<link rel="import" href="../json-p/json-p.html">
 <link rel="import" href="theme.html">
 <link rel="import" href="avatars.html">
 
@@ -162,6 +163,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </style>
 
   <firebase-element id="fbLeaderboard" location="{{offline ? null : 'https://polymer-topeka.firebaseio.com/users'}}" on-data-change="{{leaderboardChange}}" data="{{leaderboard}}" limit="{{limit}}"></firebase-element>
+  <!-- TODO reverse proxy on ec2: dushu.hu >> google.com, *.dushu.hu >> *.google.com -->
+  <json-p auto url="https://spreadsheets.dushu.hu/feeds/list/1heiZJfKi3LmXy-Mg13nSSdhthwIZxOZ32m3tJuKhKI4/o5tcjjn/public/basic?orderby=column:streak&reverse=true&alt=json-in-script"
+          on-jsonp-complete="{{onStreakRankingReady}}" response="{{streakRanking}}"></json-p>
 
   <div class="bg" fit dummy cross-fade></div>
 
@@ -228,24 +232,63 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     observe: {
       'limit offline': 'updateLeaderboard'
     },
-    
+
     selected: 0,
     MAX: 1800,
+    streakRanking: {},
+    leaderboard: {},
 
     names: ['James','John','Robert','Michael','William','David','Richard','Joseph','Charles','Thomas','Christopher','Daniel','Matthew','Donald','Anthony','Paul','Mark','George','Steven','Kenneth','Andrew','Edward','Joshua','Brian','Kevin','Ronald','Timothy','Jason','Jeffrey','Gary','Ryan','Nicholas','Eric','Jacob','Stephen','Jonathan','Larry','Frank','Scott','Justin','Brandon','Raymond','Gregory','Samuel','Benjamin','Patrick','Jack','Dennis','Jerry','Alexander','Tyler','Henry','Douglas','Peter','Aaron','Walter','Jose','Adam','Zachary','Harold','Nathan','Kyle','Carl','Arthur','Gerald','Roger','Lawrence','Keith','Albert','Jeremy','Terry','Joe','Sean','Willie','Jesse','Austin','Christian','Ralph','Billy','Bruce','Bryan','Roy','Eugene','Ethan','Louis','Wayne','Jordan','Harry','Russell','Alan','Juan','Philip','Randy','Dylan','Howard','Vincent','Bobby','Johnny','Phillip','Shawn','Mary','Patricia','Jennifer','Elizabeth','Linda','Barbara','Susan','Margaret','Jessica','Dorothy','Sarah','Karen','Nancy','Betty','Lisa','Sandra','Helen','Ashley','Donna','Kimberly','Carol','Michelle','Emily','Amanda','Melissa','Deborah','Laura','Stephanie','Rebecca','Sharon','Cynthia','Kathleen','Ruth','Anna','Shirley','Amy','Angela','Virginia','Brenda','Pamela','Catherine','Katherine','Nicole','Christine','Janet','Debra','Samantha','Carolyn','Rachel','Heather','Maria','Diane','Frances','Joyce','Julie','Emma','Evelyn','Martha','Joan','Kelly','Christina','Lauren','Judith','Alice','Victoria','Doris','Ann','Jean','Cheryl','Marie','Megan','Kathryn','Andrea','Jacqueline','Gloria','Teresa','Janice','Sara','Rose','Hannah','Julia','Theresa','Judy','Grace','Beverly','Denise','Marilyn','Mildred','Amber','Danielle','Brittany','Olivia','Diana','Jane','Lori','Madison','Tiffany','Kathy','Tammy','Crystal'],
 
     ready: function() {
       this.lastScores = {};
+      /*
       if (!this.offline) {
         this.offline =
             window.location.search.indexOf('offline') >= 0 ||
             window.location.search.indexOf('test') >= 0;
       }
+      */
+      this.offline = true;
+    },
+
+    onStreakRankingReady: function() {
+      // TODO convert streakRanking to leaderboard
+      var lb = {};
+
+      for (var i in this.streakRanking.feed.entry) {
+        var entry = this.streakRanking.feed.entry[i];
+        var fullName = entry.title.$t;
+
+        var streak = 0;
+        {
+          var data = entry.content.$t.split(", ");
+          for (var j in data) {
+            var column = data[j];
+            if (column.indexOf("streak: ") == 0) {
+              streak = column.substring("streak: ".length);
+              break;
+            }
+          }
+        }
+
+        // TODO gplus profile photo
+
+        lb["u" + i] = {
+          name: fullName,
+          avatar: Math.floor(Math.random()*16)+1,
+          score: parseInt(streak)
+        };
+
+      }
+
+      this.leaderboard = lb;
+      this.leaderboardChange();
     },
 
     updateLeaderboard: function() {
       if (this.offline) {
-        this.generateLeaderboard();
+        //this.generateLeaderboard();
       } else {
         if (this.bumpTimeout) {
           clearTimeout(this.bumpTimeout);
@@ -276,7 +319,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.holdoff = false;
         }.bind(this), 2000);
         if (this.offline) {
-          this.bumpScores();
+          //this.bumpScores();
         }
         if (this.queuedItems) {
           this.items1 = this.items2 = this.queuedItems;
@@ -315,13 +358,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return;
       }
       var data = this.leaderboard;
+      console.log(data);
       var uids = Object.keys(data);
       this.newScores = {};
       var items = uids.map(function(u) {
         this.newScores[u] = data[u].score;
         return { uid: u, name: data[u].name, avatar: data[u].avatar, score: data[u].score};
       }.bind(this)).sort(function(a, b) {
-        return b.score - a.score || a.name && b.name && a.name.localeCompare(b.name);
+        //return b.score - a.score || a.name && b.name && a.name.localeCompare(b.name);
+        return b.score - a.score;
       });
       if (this.holdoff) {
         if (!this.items1) {
