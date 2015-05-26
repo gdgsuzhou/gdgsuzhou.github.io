@@ -164,7 +164,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   <firebase-element id="fbLeaderboard" location="{{offline ? null : 'https://polymer-topeka.firebaseio.com/users'}}" on-data-change="{{leaderboardChange}}" data="{{leaderboard}}" limit="{{limit}}"></firebase-element>
   <!-- TODO reverse proxy on ec2: dushu.hu >> google.com, *.dushu.hu >> *.google.com -->
-  <json-p auto url="https://spreadsheets.dushu.hu/feeds/list/1heiZJfKi3LmXy-Mg13nSSdhthwIZxOZ32m3tJuKhKI4/o5tcjjn/public/basic?orderby=column:streak&reverse=true&alt=json-in-script"
+  <json-p auto url="https://spreadsheets.dushu.hu/feeds/list/1heiZJfKi3LmXy-Mg13nSSdhthwIZxOZ32m3tJuKhKI4/o5tcjjn/public/basic?alt=json-in-script"
           on-jsonp-complete="{{onStreakRankingReady}}" response="{{streakRanking}}"></json-p>
 
   <div class="bg" fit dummy cross-fade></div>
