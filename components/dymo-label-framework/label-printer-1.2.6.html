@@ -1,0 +1,63 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<polymer-element name="dymo-label-framework">
+    <template></template>
+    <script src="DYMO.Label.Framework.1.2.6.js"></script>
+    <script>
+        Polymer({
+            printerName: "",
+            computed: {
+                printerInstalled: "printerName != ''",
+            },
+            print: function(labelXml, properties) {
+                try
+                {
+                    if (!this.printerInstalled) {
+                        this.detectPrinter();
+                        if (!this.printerInstalled) {
+                            throw "No LabelWriter printers found. Install LabelWriter printer";
+                        }
+                    }
+
+                    // open label
+                    var label = dymo.label.framework.openLabelXml(labelXml);
+
+                    // set label text
+                    for (var i in properties) {
+                        label.setObjectText(i, properties[i]);
+                    }
+
+                    // finally print the label
+                    label.print(this.printerName);
+                }
+                catch(e)
+                {
+                    alert(e.message || e);
+                }
+            },
+//            created: function() {
+//                // create a default settings object for this instance
+//                this.settings = {
+//                    labelXML: "",
+//                };
+//            },
+            ready: function() {
+                this.detectPrinter();
+            },
+            detectPrinter: function() {
+                // select printer to print on
+                // for simplicity sake just use the first LabelWriter printer
+                var printers = dymo.label.framework.getPrinters();
+                for (var i = 0; i < printers.length; ++i)
+                {
+                    var printer = printers[i];
+                    if (printer.printerType == "LabelWriterPrinter")
+                    {
+                        this.printerName = printer.name;
+                        break;
+                    }
+                }
+            }
+        });
+    </script>
+</polymer-element>
