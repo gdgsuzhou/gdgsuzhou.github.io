@@ -258,7 +258,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       for (var i in this.streakRanking.feed.entry) {
         var entry = this.streakRanking.feed.entry[i];
-        var fullName = entry.title.$t;
+        var nickname = entry.title.$t;
 
         var streak = 0;
         {
@@ -275,7 +275,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         // TODO gplus profile photo
 
         lb["u" + i] = {
-          name: fullName,
+          name: nickname,
           avatar: Math.floor(Math.random()*16)+1,
           score: parseInt(streak)
         };
